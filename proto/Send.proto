@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "github.com/Clownsw/TelegramMessageBot/rpc";
+
+message RequestMessage {
+  string type = 1;
+  int64 chatId = 2;
+  string sendMessage = 3;
+}
+
+message ResponseMessage {
+  int32 code = 1;
+  repeated string msg = 2;
+}
+
+service SendService {
+  rpc send(stream RequestMessage) returns(ResponseMessage) {
+  }
+}
