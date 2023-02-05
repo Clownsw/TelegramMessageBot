@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"github.com/Clownsw/TelegramMessageBot/common"
 	"github.com/Clownsw/TelegramMessageBot/rpc"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -12,22 +13,13 @@ type SendService struct {
 }
 
 func (sendService *SendService) Send(stream rpc.SendService_SendServer) error {
-	var resultMsgSlice []string
-
 	for {
 		req, err := stream.Recv()
 
 		if err == io.EOF {
-			code := common.RpcSendStatusError
-
-			if len(resultMsgSlice) == 0 {
-				code = common.RpcSendStatusOk
-				resultMsgSlice = append(resultMsgSlice, common.RpcSendStatusOkMsg)
-			}
-
 			return stream.SendAndClose(&rpc.ResponseMessage{
-				Code: code,
-				Msg:  resultMsgSlice,
+				Code: common.RpcSendStatusOk,
+				Msg:  []string{common.RpcSendStatusOkMsg},
 			})
 		}
 
@@ -35,9 +27,25 @@ func (sendService *SendService) Send(stream rpc.SendService_SendServer) error {
 			return err
 		}
 
-		_, err = common.BotApi.Send(tgbotapi.NewMessage(req.ChatId, req.SendMessage))
+		message := tgbotapi.NewMessage(req.ChatId, req.SendMessage)
+
+		switch req.Type {
+		case tgbotapi.ModeHTML:
+			message.ParseMode = tgbotapi.ModeHTML
+
+		case tgbotapi.ModeMarkdown:
+			message.ParseMode = tgbotapi.ModeMarkdown
+
+		case tgbotapi.ModeMarkdownV2:
+			message.ParseMode = tgbotapi.ModeMarkdownV2
+
+		default:
+			return errors.New("unknown type")
+		}
+
+		_, err = common.BotApi.Send(&message)
 		if err != nil {
-			resultMsgSlice = append(resultMsgSlice, err.Error())
+			return err
 		}
 	}
 }

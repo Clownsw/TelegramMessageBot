@@ -45,9 +45,7 @@ func main() {
 		logrus.Panic(err)
 	}
 
-	common.BotApi.Debug = true
-
-	logrus.Info("Authorized on account", common.BotApi.Self.UserName)
+	logrus.Info("Authorized on account ", common.BotApi.Self.UserName)
 
 	// 初始化GRPC服务
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%s", common.Config.Addr, common.Config.Port))
